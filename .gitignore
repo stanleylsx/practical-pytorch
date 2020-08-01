@@ -1,0 +1,8 @@
+*.swp
+*.swo
+*.pt
+.ipynb_checkpoints
+.idea
+__pycache__
+data/eng-*.txt
+*.csv
