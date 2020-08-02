@@ -1,6 +1,6 @@
 from data import *
 
-rnn = torch.load('char-rnn-classification.pt')
+rnn = torch.load('char-rnn-name-classification.pt')
 
 
 # Just return an output given a line

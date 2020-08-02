@@ -61,4 +61,4 @@ for epoch in range(1, n_epochs + 1):
 
 
 print("Saving before quit...")
-torch.save(rnn, 'char-rnn-generation.pt')
+torch.save(rnn, 'char-rnn-name-generation.pt')

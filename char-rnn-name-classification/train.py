@@ -61,4 +61,4 @@ for epoch in range(1, n_epochs + 1):
         all_losses.append(current_loss / plot_every)
         current_loss = 0
 
-torch.save(rnn, 'char-rnn-classification.pt')
+torch.save(rnn, 'char-rnn-name-classification.pt')

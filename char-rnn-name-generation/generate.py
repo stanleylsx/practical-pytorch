@@ -2,7 +2,7 @@
 from data import *
 import torch
 
-rnn = torch.load('char-rnn-generation.pt')
+rnn = torch.load('char-rnn-name-generation.pt')
 
 # Generating from the Network
 
