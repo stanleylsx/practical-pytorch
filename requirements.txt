@@ -8,5 +8,6 @@ pyparsing==2.4.7
 python-dateutil==2.8.1
 PyYAML==5.3.1
 six==1.15.0
-torch @ file:///C:/Users/lishouxian/Desktop/torch-1.6.0%2Bcu101-cp36-cp36m-win_amd64.whl
-torchvision @ file:///C:/Users/lishouxian/Desktop/torchvision-0.7.0%2Bcu101-cp36-cp36m-win_amd64.whl
+torch==1.6.0
+torchvision==0.7.0
+unidecode==1.1.1

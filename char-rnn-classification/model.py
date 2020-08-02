@@ -1,6 +1,5 @@
 import torch
 import torch.nn as nn
-from torch.autograd import Variable
 
 
 class RNN(nn.Module):
@@ -11,7 +10,7 @@ class RNN(nn.Module):
 
         self.i2h = nn.Linear(input_size + hidden_size, hidden_size)
         self.i2o = nn.Linear(input_size + hidden_size, output_size)
-        self.softmax = nn.LogSoftmax()
+        self.softmax = nn.LogSoftmax(dim=1)
 
     def forward(self, input, hidden):
         combined = torch.cat((input, hidden), 1)
@@ -20,5 +19,5 @@ class RNN(nn.Module):
         output = self.softmax(output)
         return output, hidden
 
-    def initHidden(self):
-        return Variable(torch.zeros(1, self.hidden_size))
+    def init_hidden(self):
+        return torch.zeros(1, self.hidden_size)

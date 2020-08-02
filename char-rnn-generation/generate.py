@@ -1,46 +1,39 @@
-# https://github.com/spro/practical-pytorch
-
+# Practical PyTorch: Generating Names with a Conditional Character-Level RNN
+from data import *
 import torch
 
-from helpers import *
-from model import *
+rnn = torch.load('char-rnn-generation.pt')
 
-def generate(decoder, prime_str='A', predict_len=100, temperature=0.8):
-    hidden = decoder.init_hidden()
-    prime_input = char_tensor(prime_str)
-    predicted = prime_str
+# Generating from the Network
 
-    # Use priming string to "build up" hidden state
-    for p in range(len(prime_str) - 1):
-        _, hidden = decoder(prime_input[p], hidden)
-        
-    inp = prime_input[-1]
-    
-    for p in range(predict_len):
-        output, hidden = decoder(inp, hidden)
-        
-        # Sample from the network as a multinomial distribution
-        output_dist = output.data.view(-1).div(temperature).exp()
-        top_i = torch.multinomial(output_dist, 1)[0]
-        
-        # Add predicted character to string and use as next input
-        predicted_char = all_characters[top_i]
-        predicted += predicted_char
-        inp = char_tensor(predicted_char)
+max_length = 20
 
-    return predicted
 
-if __name__ == '__main__':
-    # Parse command line arguments
-    import argparse
-    argparser = argparse.ArgumentParser()
-    argparser.add_argument('filename', type=str)
-    argparser.add_argument('-p', '--prime_str', type=str, default='A')
-    argparser.add_argument('-l', '--predict_len', type=int, default=100)
-    argparser.add_argument('-t', '--temperature', type=float, default=0.8)
-    args = argparser.parse_args()
+# Sample from a category and starting letter
+def sample(category, start_letter='A', temperature=0.5):
+    category_input = make_category_input(category)
+    chars_input = make_chars_input(start_letter)
+    hidden = rnn.init_hidden()
 
-    decoder = torch.load(args.filename)
-    del args.filename
-    print(generate(decoder, **vars(args)))
+    output_name = start_letter
 
+    for i in range(max_length):
+        output, hidden = rnn(category_input, chars_input[0], hidden)
+        topv, topi = output.topk(1)
+        topi = topi[0][0]
+        if topi == n_letters - 1:
+            break
+        else:
+            letter = all_letters[topi]
+            output_name += letter
+        chars_input = make_chars_input(letter)
+
+    return output_name
+
+
+def samples(category, start_letters='ABC'):
+    for start_letter in start_letters:
+        print(sample(category, start_letter))
+
+
+samples('Chinese', 'CHI')

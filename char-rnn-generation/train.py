@@ -1,77 +1,64 @@
-# https://github.com/spro/practical-pytorch
-
-import torch
-import torch.nn as nn
-from torch.autograd import Variable
-import argparse
-import os
-
-from helpers import *
+# Practical PyTorch: Generating Names with a Conditional Character-Level RNN
+import time
+import math
+from data import *
 from model import *
-from generate import *
 
-# Parse command line arguments
-argparser = argparse.ArgumentParser()
-argparser.add_argument('filename', type=str)
-argparser.add_argument('--n_epochs', type=int, default=2000)
-argparser.add_argument('--print_every', type=int, default=100)
-argparser.add_argument('--hidden_size', type=int, default=50)
-argparser.add_argument('--n_layers', type=int, default=2)
-argparser.add_argument('--learning_rate', type=float, default=0.01)
-argparser.add_argument('--chunk_len', type=int, default=200)
-args = argparser.parse_args()
+n_epochs = 100000
+print_every = 5000
+plot_every = 500
+all_losses = []
+loss_avg = 0  # Zero every plot_every epochs to keep a running average
+hidden_size = 128
+learning_rate = 0.0005
 
-file, file_len = read_file(args.filename)
-
-def random_training_set(chunk_len):
-    start_index = random.randint(0, file_len - chunk_len)
-    end_index = start_index + chunk_len + 1
-    chunk = file[start_index:end_index]
-    inp = char_tensor(chunk[:-1])
-    target = char_tensor(chunk[1:])
-    return inp, target
-
-decoder = RNN(n_characters, args.hidden_size, n_characters, args.n_layers)
-decoder_optimizer = torch.optim.Adam(decoder.parameters(), lr=args.learning_rate)
-criterion = nn.CrossEntropyLoss()
+rnn = RNN(n_categories, n_letters, hidden_size, n_letters)
+optimizer = torch.optim.Adam(rnn.parameters(), lr=learning_rate)
+criterion = nn.NLLLoss()
 
 start = time.time()
-all_losses = []
-loss_avg = 0
 
-def train(inp, target):
-    hidden = decoder.init_hidden()
-    decoder.zero_grad()
+
+# Training the Network
+
+def train(category_tensor, input_line_tensor, target_line_tensor):
+    target_line_tensor.unsqueeze_(-1)
+    hidden = rnn.init_hidden()
+    optimizer.zero_grad()
     loss = 0
 
-    for c in range(args.chunk_len):
-        output, hidden = decoder(inp[c], hidden)
-        loss += criterion(output, target[c])
+    for i in range(input_line_tensor.size(0)):
+        output, hidden = rnn(category_tensor, input_line_tensor[i], hidden)
+        l = criterion(output, target_line_tensor[i])
+        loss += l
 
     loss.backward()
-    decoder_optimizer.step()
+    optimizer.step()
 
-    return loss.data[0] / args.chunk_len
+    return output, loss.item() / input_line_tensor.size(0)
 
-def save():
-    save_filename = os.path.splitext(os.path.basename(args.filename))[0] + '.pt'
-    torch.save(decoder, save_filename)
-    print('Saved as %s' % save_filename)
 
-try:
-    print("Training for %d epochs..." % args.n_epochs)
-    for epoch in range(1, args.n_epochs + 1):
-        loss = train(*random_training_set(args.chunk_len))
-        loss_avg += loss
+def time_since(t):
+    now = time.time()
+    s = now - t
+    m = math.floor(s / 60)
+    s -= m * 60
+    return '%dm %ds' % (m, s)
 
-        if epoch % args.print_every == 0:
-            print('[%s (%d %d%%) %.4f]' % (time_since(start), epoch, epoch / args.n_epochs * 100, loss))
-            print(generate(decoder, 'Wh', 100), '\n')
 
-    print("Saving...")
-    save()
+print("Training for %d epochs..." % n_epochs)
+for epoch in range(1, n_epochs + 1):
+    category, input_line, target_line = random_training_set()
+    output, loss = train(category, input_line, target_line)
+    loss_avg += loss
 
-except KeyboardInterrupt:
-    print("Saving before quit...")
-    save()
+    if epoch % print_every == 0:
+        print('%s (%d %d%%) %.4f' % (time_since(start), epoch, epoch / n_epochs * 100, loss))
 
+    if epoch % plot_every == 0:
+        all_losses.append(loss_avg / plot_every)
+        loss_avg = 0
+
+
+print("Saving before quit...")
+torch.save(rnn, 'char-rnn-generation.pt')
