@@ -45,6 +45,7 @@ class AttnDecoderRNN(nn.Module):
         attn_weights = F.softmax(attn, dim=1)
         attn_weights = attn_weights.unsqueeze(0)
         encoder_outputs = encoder_outputs.unsqueeze(0)
+        # 两个tensor的维度必须为3
         attn_applied = bmm(attn_weights, encoder_outputs)
 
         output = cat((embedded[0], attn_applied[0]), 1)
