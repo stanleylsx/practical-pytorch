@@ -36,10 +36,9 @@ loss_4 = criterion_4(sample, target)
 print(loss_4)
 print('*************')
 
+# BCE-loss
 sample = torch.tensor([[2.0, 3], [1., 3]])
 target = torch.tensor([[1., 0.], [0., 1.]])
-
-# BCE-loss
 print('BCE-loss:')
 sigmoid_input = torch.sigmoid(sample)
 criterion_5 = nn.BCELoss()
